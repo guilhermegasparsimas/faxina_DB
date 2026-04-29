@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CadasterUser from './components/CadasterUser/CadasterUser';
 import LoginUser from './components/LoginUser/LoginUser';
-import HomePage from './components/homePage/homePage';
 import Agendamento from './components/Agendamento/Agendamento';
+import HomePage from './components/homePage/HomePage';
 
 
 function App() {

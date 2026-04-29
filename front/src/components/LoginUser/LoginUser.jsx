@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 const LoginUser = () => {
     const navigate = useNavigate();
@@ -8,7 +8,9 @@ const LoginUser = () => {
         cpf: '',
         senha: ''
     });
+
     const [message, setMessage] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -17,6 +19,7 @@ const LoginUser = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setMessage(null);
+        setLoading(true);
 
         try {
             const response = await fetch('http://localhost:9001/login', {
@@ -28,57 +31,158 @@ const LoginUser = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setMessage({ texto: 'Login realizado com sucesso!', tipo: 'sucesso' });
-                 navigate('/home')
+                navigate('/home');
             } else {
                 setMessage({ texto: data.message || 'Erro ao fazer login.', tipo: 'erro' });
             }
         } catch (error) {
             setMessage({ texto: 'Erro de conexão com o servidor.', tipo: 'erro' });
+        } finally {
+            setLoading(false);
         }
     };
+
     return (
-        <div style={{ padding: '20px' }}>
-            <h2>Login</h2>
+        <div style={styles.page}>
+            {/* LADO VISUAL */}
+            <div style={styles.left}>
+                <h1 style={styles.brand}>Faxina App</h1>
+                <p style={styles.subtitle}>
+                    Gestão inteligente, simples e organizada.
+                </p>
+            </div>
 
-            {message && (
-                <div style={{
-                    padding: '10px',
-                    marginBottom: '15px',
-                    borderRadius: '4px',
-                    backgroundColor: message.tipo === 'sucesso' ? '#d4edda' : '#f8d7da',
-                    color: message.tipo === 'sucesso' ? '#155724' : '#721c24',
-                    border: `1px solid ${message.tipo === 'sucesso' ? '#c3e6cb' : '#f5c6cb'}`
-                }}>
-                    {message.texto}
-                </div>
-            )}
+            {/* FORMULÁRIO */}
+            <div style={styles.right}>
+                <form onSubmit={handleLogin} style={styles.card}>
+                    <h2 style={styles.title}>Entrar na sua conta</h2>
 
-            <form onSubmit={handleLogin}>
-                <div>
-                    <label>CPF:</label><br />
+                    {message && (
+                        <div style={styles.errorBox}>
+                            {message.texto}
+                        </div>
+                    )}
+
                     <input
+                        style={styles.input}
                         name="cpf"
-                        placeholder="000.000.000-00"
+                        placeholder="CPF"
                         onChange={handleChange}
                         required
                     />
-                </div>
-                <div>
-                    <label>Senha:</label><br />
+
                     <input
+                        style={styles.input}
                         name="senha"
                         type="password"
-                        placeholder="Digite sua senha"
+                        placeholder="Senha"
                         onChange={handleChange}
                         required
-                        autoComplete='new-password'
                     />
-                </div>
-                <button type="submit">Entrar</button>
-            </form>
+
+                    <button style={styles.button} type="submit" disabled={loading}>
+                        {loading ? 'Entrando...' : 'Entrar'}
+                    </button>
+
+                    <p style={styles.footerText}>
+                        Esqueceu sua senha?
+                    </p>
+                </form>
+            </div>
         </div>
     );
+};
+
+const styles = {
+    page: {
+        height: '100vh',
+        display: 'flex',
+        fontFamily: 'Segoe UI, sans-serif'
+    },
+
+    /* LADO ESQUERDO */
+    left: {
+        flex: 1,
+        background: 'linear-gradient(135deg, #4a6fa5, #6c8fc7)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: '60px',
+        color: '#fff'
+    },
+
+    brand: {
+        fontSize: '42px',
+        marginBottom: '10px'
+    },
+
+    subtitle: {
+        fontSize: '18px',
+        opacity: 0.9,
+        maxWidth: '300px'
+    },
+
+    /* LADO DIREITO */
+    right: {
+        flex: 1,
+        backgroundColor: '#f5f7fb',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
+    card: {
+        width: '340px',
+        backgroundColor: '#fff',
+        padding: '35px',
+        borderRadius: '14px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px'
+    },
+
+    title: {
+        textAlign: 'center',
+        color: '#2c3e50',
+        marginBottom: '10px'
+    },
+
+    input: {
+        padding: '12px',
+        borderRadius: '8px',
+        border: '1px solid #dcdfe6',
+        outline: 'none',
+        fontSize: '14px',
+        transition: '0.2s'
+    },
+
+    button: {
+        padding: '12px',
+        borderRadius: '8px',
+        border: 'none',
+        backgroundColor: '#4a6fa5',
+        color: '#fff',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: '0.3s'
+    },
+
+    errorBox: {
+        backgroundColor: '#fdecea',
+        color: '#c62828',
+        padding: '10px',
+        borderRadius: '8px',
+        fontSize: '13px'
+    },
+
+    footerText: {
+        textAlign: 'center',
+        fontSize: '12px',
+        color: '#7a7a7a',
+        marginTop: '5px',
+        cursor: 'pointer'
+    }
 };
 
 export default LoginUser;
