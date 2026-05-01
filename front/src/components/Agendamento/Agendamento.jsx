@@ -1,177 +1,376 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+    Overlay,
+    Modal,
+    Form,
+    Input,
+    Select,
+    SaveButton,
+    CancelButton,
+    Page,
+    Sidebar,
+    MenuButton
+} from './styles';
+import ModalCriarAgendamento from './components/ModalCriarAgendamento';
+import ModalEditarAgendamento from './components/ModalEditarAgendamento';
 
 const Agendamento = () => {
+    const navigate = useNavigate();
+
     const [agendamentos, setAgendamentos] = useState([]);
-    const [editando, setEditando] = useState(null);
+
+    const [modalCriarOpen, setModalCriarOpen] = useState(false);
+
+    const [modalEditarOpen, setModalEditarOpen] = useState(false);
 
     const [form, setForm] = useState({
-        data: "",
-        hora: "",
-        endereco_cliente: "",
-        servico: ""
+        nome_cliente: '',
+        data: '',
+        hora: '',
+        endereco_cliente: '',
+        servico: '',
     });
 
-    // 🔄 Simulação (depois vira API GET)
+    const [agendamentoEditando, setAgendamentoEditando] = useState(null);
+
     useEffect(() => {
-        setAgendamentos([
-            {
-                id: 1,
-                data: "2026-05-01",
-                hora: "10:00",
-                endereco_cliente: "Rua A, 123",
-                servico: "Residencial"
-            },
-            {
-                id: 2,
-                data: "2026-05-03",
-                hora: "14:00",
-                endereco_cliente: "Av. Central, 500",
-                servico: "Comercial"
-            }
-        ]);
+        buscarAgendamentos();
     }, []);
 
-    const handleDelete = (id) => {
-        const filtrados = agendamentos.filter(a => a.id !== id);
-        setAgendamentos(filtrados);
-    };
-
-    const handleEdit = (agendamento) => {
-        setEditando(agendamento);
-        setForm(agendamento);
-    };
-
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        setForm({
+            ...form,
+            [e.target.name]: e.target.value,
+        });
     };
 
-    const salvarEdicao = (e) => {
-        e.preventDefault();
+    const abrirEdicao = (agendamento) => {
+        setAgendamentoEditando(agendamento.agendamento_id);
 
-        const atualizados = agendamentos.map(a =>
-            a.id === editando.id ? { ...form, id: a.id } : a
+        setForm({
+            nome_cliente: agendamento.nome_cliente,
+            data: agendamento.data?.split('T')[0],
+            hora: agendamento.hora,
+            endereco_cliente: agendamento.endereco_cliente,
+            servico: agendamento.servico,
+        });
+
+        setModalEditarOpen(true);
+    };
+
+    const buscarAgendamentos = async () => {
+        try {
+
+            const response = await fetch('http://localhost:9001/agendamento');
+
+            const data = await response.json();
+
+            setAgendamentos(data);
+
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const cancelarAgendamento = async (id) => {
+
+        const confirmar = window.confirm(
+            'Deseja cancelar este agendamento?'
         );
 
-        setAgendamentos(atualizados);
-        setEditando(null);
+        if (!confirmar) return;
+
+        try {
+
+            await fetch(`http://localhost:9001/agendamento/${id}`, {
+                method: 'DELETE',
+            });
+
+            buscarAgendamentos();
+
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const editarAgendamento = async (e) => {
+
+        e.preventDefault();
+
+        try {
+
+            const response = await fetch(
+                `http://localhost:9001/agendamento/${agendamentoEditando}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(form),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Erro ao editar agendamento');
+            }
+
+            alert('Agendamento atualizado!');
+
+            setModalEditarOpen(false);
+
+            buscarAgendamentos();
+
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const criarAgendamento = async (e) => {
+
+        e.preventDefault();
+
+        try {
+
+            const response = await fetch(
+                'http://localhost:9001/agendamento',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(form),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Erro ao criar agendamento');
+            }
+
+            alert('Agendamento criado!');
+
+            setModalCriarOpen(false);
+
+            buscarAgendamentos();
+
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     return (
-        <div style={styles.container}>
+        <Page>
 
-            <h1 style={styles.title}>📅 Meus Agendamentos</h1>
+            {/* MENU */}
+            <Sidebar>
+                <h2>Faxina App</h2>
 
-            <div style={styles.grid}>
-                {agendamentos.map((a) => (
-                    <div key={a.id} style={styles.card}>
+                <MenuButton onClick={() => setModalCriarOpen(true)}>
+                    🧹 Nova Faxina
+                </MenuButton>
 
-                        <p><strong>Serviço:</strong> {a.servico}</p>
-                        <p><strong>Data:</strong> {a.data}</p>
-                        <p><strong>Hora:</strong> {a.hora}</p>
-                        <p><strong>Endereço:</strong> {a.endereco_cliente}</p>
+                <MenuButton>
+                    📅 Meus Agendamentos
+                </MenuButton>
 
-                        <div style={styles.actions}>
-                            <button
-                                style={styles.editBtn}
-                                onClick={() => handleEdit(a)}
-                            >
-                                Editar
-                            </button>
+                <MenuButton onClick={() => navigate('/home')}>
+                    🏠  Home
+                </MenuButton>
+            </Sidebar>
 
-                            <button
-                                style={styles.deleteBtn}
-                                onClick={() => handleDelete(a.id)}
-                            >
-                                Cancelar
-                            </button>
+            {/* CONTEÚDO */}
+            <main style={styles.content}>
+
+                <h1 style={{ color: 'black' }}>
+                    Meus Agendamentos
+                </h1>
+
+                <div style={styles.list}>
+
+                    {agendamentos.map((item) => (
+
+                        <div key={item.agendamento_id} style={styles.card}>
+
+                            <h3>
+                                {item.nome_cliente}
+                            </h3>
+
+                            <p>
+                                <strong>Serviço:</strong> {item.servico}
+                            </p>
+
+                            <p>
+                                <strong>Data:</strong> {item.data}
+                            </p>
+
+                            <p>
+                                <strong>Hora:</strong> {item.hora}
+                            </p>
+
+                            <p>
+                                <strong>Endereço:</strong> {item.endereco_cliente}
+                            </p>
+
+                            <div style={styles.actions}>
+
+                                <button onClick={() => abrirEdicao(item)} style={styles.editButton}>
+                                    Editar
+                                </button>
+
+                                <button
+                                    style={styles.deleteButton}
+                                    onClick={() => cancelarAgendamento(item.agendamento_id)}
+                                >
+                                    Cancelar
+                                </button>
+
+                            </div>
+
                         </div>
-                    </div>
-                ))}
-            </div>
 
-            {/* MODAL DE EDIÇÃO */}
-            {editando && (
-                <div style={styles.overlay}>
-                    <div style={styles.modal}>
-                        <h2>Editar Agendamento</h2>
+                    ))}
 
-                        <form onSubmit={salvarEdicao} style={styles.form}>
+                </div>
 
-                            <input
-                                name="data"
+            </main>
+            {modalEditarOpen && (
+                <Overlay>
+
+                    <Modal>
+
+                        <h2 style={{ color: 'black' }}>
+                            Editar Agendamento
+                        </h2>
+
+                        <Form onSubmit={editarAgendamento}>
+
+                            <Input
+                                type="text"
+                                name="nome_cliente"
+                                value={form.nome_cliente}
+                                onChange={handleChange}
+                                placeholder="Nome"
+                            />
+
+                            <Input
                                 type="date"
+                                name="data"
                                 value={form.data}
                                 onChange={handleChange}
-                                style={styles.input}
                             />
 
-                            <input
-                                name="hora"
+                            <Input
                                 type="time"
+                                name="hora"
                                 value={form.hora}
                                 onChange={handleChange}
-                                style={styles.input}
                             />
 
-                            <input
+                            <Input
+                                type="text"
                                 name="endereco_cliente"
-                                placeholder="Endereço do cliente"
                                 value={form.endereco_cliente}
                                 onChange={handleChange}
-                                style={styles.input}
+                                placeholder="Endereço"
                             />
 
-                            <select
+                            <Select
                                 name="servico"
                                 value={form.servico}
                                 onChange={handleChange}
-                                style={styles.input}
                             >
-                                <option value="">Selecione o serviço</option>
-                                <option value="Residencial">Residencial</option>
-                                <option value="Comercial">Comercial</option>
-                                <option value="Profunda">Profunda</option>
-                            </select>
+                                <option value="residencial">
+                                    Residencial
+                                </option>
 
-                            <button style={styles.saveBtn} type="submit">
+                                <option value="comercial">
+                                    Comercial
+                                </option>
+
+                                <option value="profunda">
+                                    Profunda
+                                </option>
+                            </Select>
+
+                            <SaveButton type="submit">
                                 Salvar
-                            </button>
+                            </SaveButton>
 
-                            <button
+                            <CancelButton
                                 type="button"
-                                style={styles.cancelBtn}
-                                onClick={() => setEditando(null)}
+                                onClick={() => setModalEditarOpen(false)}
                             >
-                                Fechar
-                            </button>
+                                Cancelar
+                            </CancelButton>
 
-                        </form>
-                    </div>
-                </div>
+                        </Form>
+
+                    </Modal>
+
+                </Overlay>
+            )}
+            {modalCriarOpen && (
+                <ModalCriarAgendamento
+                    form={form}
+                    handleChange={handleChange}
+                    fechar={() => setModalCriarOpen(false)}
+                    criarAgendamento={criarAgendamento}
+                />
             )}
 
-        </div>
+            {modalEditarOpen && (
+                <ModalEditarAgendamento
+                    form={form}
+                    handleChange={handleChange}
+                    fechar={() => setModalEditarOpen(false)}
+                    editarAgendamento={editarAgendamento}
+                />
+            )}
+
+        </Page>
     );
-};
+}
 
 const styles = {
 
-    container: {
-        padding: '40px',
-        fontFamily: 'Segoe UI',
+    page: {
+        display: 'flex',
+        height: '100vh',
         backgroundColor: '#f5f7fb',
-        minHeight: '100vh'
+        fontFamily: 'Segoe UI'
     },
 
-    title: {
-        color: '#2c3e50',
-        marginBottom: '20px'
+    sidebar: {
+        width: '260px',
+        background: 'linear-gradient(180deg, #4a6fa5, #6c8fc7)',
+        padding: '25px',
+        color: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
     },
 
-    grid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '20px'
+    menuButton: {
+        padding: '12px',
+        border: 'none',
+        borderRadius: '8px',
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        color: '#fff',
+        cursor: 'pointer',
+        textAlign: 'left'
+    },
+
+    content: {
+        flex: 1,
+        padding: '40px',
+        overflowY: 'auto'
+    },
+
+    list: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        marginTop: '20px'
     },
 
     card: {
@@ -182,73 +381,27 @@ const styles = {
     },
 
     actions: {
-        marginTop: '15px',
         display: 'flex',
-        gap: '10px'
+        gap: '10px',
+        marginTop: '15px'
     },
 
-    editBtn: {
-        padding: '8px 12px',
+    editButton: {
+        padding: '10px 14px',
         border: 'none',
-        borderRadius: '6px',
-        backgroundColor: '#4a6fa5',
+        borderRadius: '8px',
+        backgroundColor: '#f39c12',
         color: '#fff',
         cursor: 'pointer'
     },
 
-    deleteBtn: {
-        padding: '8px 12px',
+    deleteButton: {
+        padding: '10px 14px',
         border: 'none',
-        borderRadius: '6px',
+        borderRadius: '8px',
         backgroundColor: '#e74c3c',
         color: '#fff',
         cursor: 'pointer'
-    },
-
-    overlay: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-
-    modal: {
-        backgroundColor: '#fff',
-        padding: '25px',
-        borderRadius: '12px',
-        width: '350px'
-    },
-
-    form: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px'
-    },
-
-    input: {
-        padding: '10px',
-        borderRadius: '8px',
-        border: '1px solid #ddd'
-    },
-
-    saveBtn: {
-        padding: '10px',
-        backgroundColor: '#4a6fa5',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '8px'
-    },
-
-    cancelBtn: {
-        padding: '10px',
-        backgroundColor: '#ccc',
-        border: 'none',
-        borderRadius: '8px'
     }
 };
 

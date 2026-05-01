@@ -15,32 +15,62 @@ const LoginUser = () => {
     const handleChange = (e) => {
         setCredentials({ ...credentials, [e.target.name]: e.target.value });
     };
-
     const handleLogin = async (e) => {
-        e.preventDefault();
-        setMessage(null);
-        setLoading(true);
+    e.preventDefault();
 
-        try {
-            const response = await fetch('http://localhost:9001/login', {
+    setMessage(null);
+    setLoading(true);
+
+    try {
+
+        const response = await fetch(
+            'http://localhost:9001/login',
+            {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(credentials)
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            setMessage({
+                texto: data.message || 'Erro ao fazer login.',
+                tipo: 'erro'
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                navigate('/home');
-            } else {
-                setMessage({ texto: data.message || 'Erro ao fazer login.', tipo: 'erro' });
-            }
-        } catch (error) {
-            setMessage({ texto: 'Erro de conexão com o servidor.', tipo: 'erro' });
-        } finally {
-            setLoading(false);
+            return;
         }
-    };
+
+        localStorage.setItem(
+            'token',
+            data.token
+        );
+
+        localStorage.setItem(
+            'usuario',
+            JSON.stringify(data.usuario)
+        );
+
+        navigate('/home');
+
+    } catch (error) {
+
+        setMessage({
+            texto: 'Erro de conexão com o servidor.',
+            tipo: 'erro'
+        });
+
+    } finally {
+
+        setLoading(false);
+
+    }
+};
 
     return (
         <div style={styles.page}>
@@ -110,6 +140,8 @@ const styles = {
         padding: '60px',
         color: '#fff'
     },
+
+    
 
     brand: {
         fontSize: '42px',

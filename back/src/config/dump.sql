@@ -22,3 +22,9 @@ ALTER TABLE `faxina_db`.`agendamento`
 ADD COLUMN `hora` TIME NULL AFTER `data`,
 ADD COLUMN `servico` ENUM("residencial", "comercial", "profunda") NULL AFTER `endereco_cliente`,
 CHANGE COLUMN `data_hora` `data` DATE NULL DEFAULT NULL ;
+
+ALTER TABLE `faxina_db`.`agendamento` 
+ADD COLUMN `nome_cliente` VARCHAR(45) NULL DEFAULT NULL AFTER `agendamento_id`;
+
+ALTER TABLE `faxina_db`.`agendamento` 
+CHANGE COLUMN `agendamento_id` `agendamento_id` INT NOT NULL AUTO_INCREMENT ;

@@ -13,7 +13,7 @@ const createUser = async (req, res) => {
         if(email.length < 5 || email === ""){
             return res.status(400).json({message: 'O email deve ser completo. Deve conter pelo menos 5 caracteres e não pode estar vazio.'});
         }
-
+        
         const saltRounds = 10; //numero mais comum para o bcrypt - define quantas vezes a senha será processada para gerar o hash / quanto maior o número, mais seguro, mas também mais lento
         const hashPassword = await bcrypt.hash(senha, saltRounds); //criptografa a senha
 

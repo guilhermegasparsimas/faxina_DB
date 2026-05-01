@@ -32,9 +32,23 @@ const CadasterUser = () => {
             });
 
             if (response.ok) {
-                navigate('/login');
+
+                setMessage({
+                    texto: 'Usuário cadastrado com sucesso!',
+                    tipo: 'sucesso'
+                });
+
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+
             } else {
-                setMessage({ texto: 'Erro ao cadastrar usuário.', tipo: 'erro' });
+
+                setMessage({
+                    texto: 'Erro ao cadastrar usuário.',
+                    tipo: 'erro'
+                });
+
             }
         } catch (error) {
             setMessage({ texto: 'Erro de conexão com o servidor.', tipo: 'erro' });
@@ -60,7 +74,13 @@ const CadasterUser = () => {
                     <h2 style={styles.title}>Criar conta</h2>
 
                     {message && (
-                        <div style={styles.errorBox}>
+                        <div
+                            style={
+                                message.tipo === 'sucesso'
+                                    ? styles.successBox
+                                    : styles.errorBox
+                            }
+                        >
                             {message.texto}
                         </div>
                     )}
@@ -105,8 +125,8 @@ const CadasterUser = () => {
                         onChange={handleChange}
                     >
                         <option value="cliente">Cliente</option>
-                        <option value="adm">Administrador</option>
                         <option value="funcionario">Funcionário</option>
+                        <option value="adm">Administrador</option>
                     </select>
 
                     <button style={styles.button} type="submit" disabled={loading}>
@@ -180,6 +200,14 @@ const styles = {
         border: '1px solid #dcdfe6',
         fontSize: '14px',
         outline: 'none'
+    },
+    
+    successBox: {
+        backgroundColor: '#e8f5e9',
+        color: '#2e7d32',
+        padding: '10px',
+        borderRadius: '8px',
+        fontSize: '13px'
     },
 
     button: {
